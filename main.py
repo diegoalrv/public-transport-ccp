@@ -53,7 +53,7 @@ class DataExtractor:
         self.timestamp_str = self.timestamp.strftime("%Y%m%d_%H%M%S")
         pass
 
-    def connect_to_redis(self, host='redis-gtfs', port=6379, db=8):
+    def connect_to_redis(self, host, port, db):
         try:
             self.redis_client = redis.StrictRedis(host=host, port=port, db=db)
             print("Conexión a Redis establecida.")
@@ -76,13 +76,28 @@ class DataExtractor:
 def main():
     data_extractor = DataExtractor()
     print(f"URL de la API: {data_extractor.endpoint_url}")
-    data_extractor.connect_to_redis()
+
+    host = os.getenv("REDIS_HOST")
+    port = os.getenv("REDIS_PORT")
+    db = os.getenv("REDIS_DB")
+    
+    if not host or not port or not db:
+        print("No se han definido las variables de entorno para la conexión a Redis.")
+        return
+
+    data_extractor.connect_to_redis(host, port, db)
+
+    waiting_time = os.getenv("waiting_time", 60)
+    max_retries = os.getenv("max_retries", 5)
+
+    waiting_time = int(waiting_time)
+    max_retries = int(max_retries)
 
     while(True):
         data_extractor.set_current_timestamp()
         print(f"Timestamp actual: {data_extractor.timestamp}")
     
-        for i in range(5):
+        for i in range(max_retries):
             print(f"Intento {i+1}")
             try:
                 data_extractor.fetch_data()
@@ -96,7 +111,7 @@ def main():
                 time.sleep(1)
 
         data_extractor.save_data_to_redis()
-        time.sleep(60)
+        time.sleep(waiting_time)
 
     data_extractor.disconnect_from_redis()
     print("Proceso finalizado.")

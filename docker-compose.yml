@@ -1,27 +1,27 @@
 services:
 
   etl:
-    build: ./
+    build: .
     container_name: etl
     restart: always
     env_file:
       - .env
-    depends_on:
-      - redis-gtfs
-    # networks:
-    #   - clbb
+    # depends_on:
+    #   - redis-gtfs
+    networks:
+      - clbb
 
-  redis-gtfs:
-    image: redis
-    container_name: redis
-    restart: always
-    volumes:
-      - redis_data_gtfs:/data
+  # redis-gtfs:
+  #   image: redis
+  #   container_name: redis-gtfs
+  #   restart: always
+  #   volumes:
+  #     - redis_data_gtfs:/data
     
-volumes:
-  redis_data_gtfs:
-    driver: local
+# volumes:
+#   redis_data_gtfs:
+#     driver: local
 
-# networks:
-#   clbb:
-#     driver: bridge
+networks:
+  clbb:
+    external: true
